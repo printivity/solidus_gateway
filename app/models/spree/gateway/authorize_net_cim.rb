@@ -42,7 +42,7 @@ module Spree
       create_transaction(nil, creditcard, :void, transaction_options(gateway_options).merge(trans_id: response_code))
     end
 
-    def cancel(response_code)      
+    def cancel(response_code)
       # From: http://community.developer.authorize.net/t5/The-Authorize-Net-Developer-Blog/Refunds-in-Retail-A-user-friendly-approach-using-AIM/ba-p/9848
       # DD: if unsettled, void needed
       response = void(response_code, nil)
@@ -93,13 +93,13 @@ module Spree
     def update_payment_profile(payment)
       if payment.source.has_payment_profile?
         if hash = get_payment_profile(payment)
-          hash[:bill_to] = generate_address_hash(payment.order.bill_address) 
+          hash[:bill_to] = generate_address_hash(payment.order.bill_address)
           if hash[:payment][:credit_card]
             # activemerchant expects a credit card object with 'number', 'year', 'month', and 'verification_value?' defined
             payment.source.define_singleton_method(:number) { "XXXXXXXXX#{payment.source.last_digits}" }
             hash[:payment][:credit_card] = payment.source
           end
-          cim_gateway.update_customer_payment_profile({ 
+          cim_gateway.update_customer_payment_profile({
             customer_profile_id: payment.source.gateway_customer_profile_id,
             payment_profile: hash
           })
@@ -110,7 +110,7 @@ module Spree
     private
 
       def transaction_options(gateway_options = {})
-        { order: { invoice_number: gateway_options[:order_id] } } 
+        { order: { invoice_number: gateway_options[:order_id] } }
       end
 
       # Create a transaction on a creditcard
