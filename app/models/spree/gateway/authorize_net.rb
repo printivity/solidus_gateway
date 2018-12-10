@@ -1,5 +1,5 @@
 module Spree
-  class Gateway::AuthorizeNet < PaymentMethod::CreditCard
+  class Gateway::AuthorizeNet < Gateway
     preference :login, :string
     preference :password, :string
 
