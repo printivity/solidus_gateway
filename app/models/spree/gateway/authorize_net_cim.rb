@@ -47,7 +47,19 @@ module Spree
       # DD: if unsettled, void needed
       response = void(response_code, nil)
       # DD: if settled, credit/refund needed
-      response = credit(nil, nil, response_code) unless response.success?
+
+      payment = Spree::Payment.find_by(response_code: response_code)
+      # convert to cents or pass through nil and allow us to raise
+      credit_amount = nil
+      payment_source = nil
+
+      if payment.present?
+        # convert to cents as #create_transaction casts the amount and converts from cents -> dollars
+        credit_amount = payment.amount * 100.0
+        payment_source = payment.source
+      end
+
+      response = credit(credit_amount, payment_source, response_code) unless response.success?
 
       response
     end
