@@ -23,7 +23,7 @@ module SpreeGateway
         app.config.spree.payment_methods << Spree::Gateway::PinGateway
         app.config.spree.payment_methods << Spree::Gateway::Paymill
         app.config.spree.payment_methods << Spree::Gateway::PayflowPro
-        app.config.spree.payment_methods << Spree::Gateway::SecurePayAU
+        app.config.spree.payment_methods << Spree::Gateway::SecurePayAu
         app.config.spree.payment_methods << Spree::Gateway::Maxipago
         app.config.spree.payment_methods << Spree::Gateway::Migs
         app.config.spree.payment_methods << Spree::Gateway::SpreedlyCoreGateway

@@ -67,7 +67,7 @@ module Spree
 
       response = gateway.store(creditcard, options)
       if response.success?
-        payment.source.update_attributes!({
+        payment.source.update!({
           cc_type: payment.source.cc_type, # side-effect of update_source!
           gateway_customer_profile_id: response.params['id'],
           gateway_payment_profile_id: response.params['default_source'] || response.params['default_card']
