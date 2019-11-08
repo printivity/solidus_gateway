@@ -88,7 +88,8 @@ module Spree
 
     def options_for_purchase_or_auth(money, creditcard, gateway_options)
       options = {}
-      options[:description] = "#{gateway_options[:store_name]}-#{gateway_options[:order_id]}"
+      order = gateway_options[:originator].order
+      options[:description] = "#{order.store.name.first(15)}-#{order.visual_id}"
       options[:currency] = gateway_options[:currency]
 
       if customer = creditcard.gateway_customer_profile_id
