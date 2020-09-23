@@ -54,6 +54,8 @@ RSpec.describe "Stripe checkout", type: :feature do
     cc_expiration.to_s.chars.each do |date|
       find_field("Expiration").send_keys(date)
     end
+
+    allow_any_instance_of(Spree::Order).to receive(:for_delivery?).and_return(true)
   end
 
   # This will fetch a token from Stripe.com and then pass that to the webserver.

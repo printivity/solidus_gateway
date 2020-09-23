@@ -6,13 +6,10 @@ require "capybara/rspec"
 ENV["RAILS_ENV"] ||= "test"
 
 require File.expand_path("../dummy/config/environment.rb",  __FILE__)
-
-
 require "spree/testing_support/preferences"
 
 require "solidus_dev_support/rspec/feature_helper"
 require "solidus_dev_support/testing_support/preferences"
-
 
 Webdrivers::Chromedriver.update
 
