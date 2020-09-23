@@ -1,9 +1,9 @@
 module Spree
-  class Gateway::SecurePayAu < Gateway
+  class Gateway::SecurePayAu < PaymentMethod::CreditCard
     preference :login, :string
     preference :password, :string
 
-    def provider_class
+    def gateway_class
       ActiveMerchant::Billing::SecurePayAuGateway
     end
   end

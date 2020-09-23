@@ -1,0 +1,103 @@
+require:
+  - rubocop-rails
+  - rubocop-rspec
+
+### Layout section ###
+
+Layout/LineLength:
+  Max: 200
+
+### Metrics section ###
+
+Metrics/AbcSize:
+  Max: 35
+
+Metrics/MethodLength:
+  Max: 50
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*_spec.rb'
+
+### Style Section ###
+
+Style/SafeNavigation:
+  ConvertTry: true
+
+Style/SymbolArray:
+  Enabled: False
+
+Style/WordArray:
+  Enabled: False
+
+Style/FrozenStringLiteralComment:
+  Enabled: False
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+### Rails Section ###
+
+Rails:
+  Enabled: true
+
+Rails/HttpPositionalArguments:
+  Enabled: False
+
+Rails/SkipsModelValidations:
+  Enabled: false
+
+AllCops:
+  RubyInterpreters:
+    - ruby
+    - rake
+  Exclude:
+    - 'db/schema.rb'
+    - 'db/migrate/*.rb'
+
+Documentation:
+  Enabled: False
+
+### Naming ###
+
+Naming/VariableNumber:
+  EnforcedStyle: snake_case
+  Enabled: true
+
+### Rspec ###
+
+RSpec/ExpectChange:
+  EnforcedStyle: block
+
+RSpec/NamedSubject:
+  Enabled: false
+
+RSpec/NestedGroups:
+  Enabled: false
+
+RSpec/MessageSpies:
+  EnforcedStyle: receive
+
+RSpec/ContextWording:
+  Prefixes:
+    - and
+    - but
+    - in
+    - when
+    - with
+    - without
+
+RSpec/MultipleExpectations:
+  Enabled: true
+  Exclude:
+    - spec/features/**/*
+    - spec/requests/**/*
+    - spec/mailers/**/*
+
+RSpec/ExampleLength:
+  Max: 10
+
+### Linting ###
+
+Lint/AmbiguousBlockAssociation:
+  Enabled: false
