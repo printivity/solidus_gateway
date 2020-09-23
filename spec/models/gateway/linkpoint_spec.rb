@@ -1,36 +1,36 @@
 require 'spec_helper'
 
 describe Spree::Gateway::Linkpoint do
-  let(:gateway) { described_class.create!(name: 'Linkpoint') }
-  let(:provider) { double('provider') }
+  let(:linkpoint_gateway) { described_class.create!(name: 'Linkpoint') }
+  let(:mock_linkpoint_gateway) { double('gateway') }
   let(:money) { double('money') }
   let(:credit_card) { double('credit_card') }
   let(:identification) { double('identification') }
   let(:options) { { subtotal: 3, discount: -1 } }
 
   before do
-    allow(gateway.provider_class).to receive_messages(new: provider)
+    allow(linkpoint_gateway.gateway_class).to receive_messages(new: mock_linkpoint_gateway)
   end
 
-  context '.provider_class' do
+  context '.gateway_class' do
     it 'is a Linkpoint gateway' do
-      expect(gateway.provider_class).to eq ::ActiveMerchant::Billing::LinkpointGateway
+      expect(linkpoint_gateway.gateway_class).to eq ::ActiveMerchant::Billing::LinkpointGateway
     end
   end
 
   context '#authorize' do
     it 'adds the discount to the subtotal' do
-      expect(provider).to receive(:authorize)
+      expect(mock_linkpoint_gateway).to receive(:authorize)
         .with(money, credit_card, subtotal: 2, discount: 0)
-      gateway.authorize(money, credit_card, options)
+      linkpoint_gateway.authorize(money, credit_card, options)
     end
   end
 
   context '#purchase' do
     it 'adds the discount to the subtotal' do
-      expect(provider).to receive(:purchase)
+      expect(mock_linkpoint_gateway).to receive(:purchase)
         .with(money, credit_card, subtotal: 2, discount: 0)
-      gateway.purchase(money, credit_card, options)
+      linkpoint_gateway.purchase(money, credit_card, options)
     end
   end
 
@@ -38,25 +38,25 @@ describe Spree::Gateway::Linkpoint do
     let(:authorization) { double('authorization') }
 
     it 'adds the discount to the subtotal' do
-      expect(provider).to receive(:capture)
+      expect(mock_linkpoint_gateway).to receive(:capture)
         .with(money, authorization, subtotal: 2, discount: 0)
-      gateway.capture(money, authorization, options)
+      linkpoint_gateway.capture(money, authorization, options)
     end
   end
 
   context '#void' do
     it 'adds the discount to the subtotal' do
-      expect(provider).to receive(:void)
+      expect(mock_linkpoint_gateway).to receive(:void)
         .with(identification, subtotal: 2, discount: 0)
-      gateway.void(identification, options)
+      linkpoint_gateway.void(identification, options)
     end
   end
 
   context '#credit' do
     it 'adds the discount to the subtotal' do
-      expect(provider).to receive(:credit)
+      expect(mock_linkpoint_gateway).to receive(:credit)
         .with(money, identification, subtotal: 2, discount: 0)
-      gateway.credit(money, identification, options)
+      linkpoint_gateway.credit(money, identification, options)
     end
   end
 end

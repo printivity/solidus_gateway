@@ -8,11 +8,12 @@ module Spree
     end
 
     def options
-      super().merge(test: self.preferred_test_mode)
+      super.merge(test: self.preferred_test_mode)
     end
 
     def credit(amount, response_code, refund, gateway_options = {})
       gateway_options[:card_number] = refund[:originator].payment.source.last_digits
+
       auth_net_gateway.refund(amount, response_code, gateway_options)
     end
 
@@ -23,6 +24,7 @@ module Spree
         ActiveMerchant::Billing::Base.gateway_mode = preferred_server.to_sym
         gateway_options = options
         gateway_options[:test_requests] = false # DD: never ever do test requests because just returns transaction_id = 0
+
         ActiveMerchant::Billing::AuthorizeNetGateway.new(gateway_options)
       end
     end

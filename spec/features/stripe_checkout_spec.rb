@@ -1,4 +1,4 @@
-require 'spec_helper'
+require "spec_helper"
 
 RSpec.describe "Stripe checkout", type: :feature do
   before do
@@ -12,7 +12,7 @@ RSpec.describe "Stripe checkout", type: :feature do
     Spree::Gateway::StripeGateway.create!(
       name: "Stripe",
       preferred_secret_key: "sk_test_VCZnDv3GLU15TRvn8i2EsaAN",
-      preferred_publishable_key: "pk_test_Cuf0PNtiAkkMpTVC2gwYDMIg",
+      preferred_publishable_key: "pk_test_Cuf0PNtiAkkMpTVC2gwYDMIg"
     )
 
     FactoryBot.create(:product, name: "DL-44")
@@ -33,10 +33,11 @@ RSpec.describe "Stripe checkout", type: :feature do
       fill_in "Street Address", with: "YT-1300"
       fill_in "City", with: "Mos Eisley"
       select "United States of America", from: "Country"
-      select country.states.first, from: "order_bill_address_attributes_state_id"
+      select country.states.first.name, from: "order_bill_address_attributes_state_id"
       fill_in "Zip", with: "12010"
       fill_in "Phone", with: "(555) 555-5555"
     end
+
     click_on "Save and Continue"
 
     # Delivery
@@ -45,52 +46,80 @@ RSpec.describe "Stripe checkout", type: :feature do
     click_on "Save and Continue"
 
     expect(page).to have_current_path("/checkout/payment")
+
+    cc_number.to_s.chars.each do |number|
+      find_field("Card Number").send_keys(number)
+    end
+
+    cc_expiration.to_s.chars.each do |date|
+      find_field("Expiration").send_keys(date)
+    end
   end
 
   # This will fetch a token from Stripe.com and then pass that to the webserver.
   # The server then processes the payment using that token.
-  it "can process a valid payment", js: true do
-    fill_in "Card Number", with: "4242 4242 4242 4242"
-    fill_in "Card Code", with: "123"
-    fill_in "Expiration", with: "01 / #{Time.now.year + 1}"
-    click_button "Save and Continue"
-    expect(page).to have_current_path("/checkout/confirm")
-    click_button "Place Order"
-    expect(page).to have_content("Your order has been processed successfully")
+  context "when the CC number is valid" do
+    let(:cc_number) { "4242 4242 4242 4242" }
+
+    context "when the expiration is valid" do
+      let(:cc_expiration) { "01 / #{Time.current.year + 1}" }
+
+      it "processes a valid payment", js: true do
+        fill_in "Card Code", with: "123"
+        click_button "Save and Continue"
+        expect(page).to have_current_path("/checkout/confirm")
+        click_button "Place Order"
+        expect(page).to have_content("Your order has been processed successfully")
+      end
+
+      context "when the security fields are invalid" do
+        let(:cc_security) { "12" }
+
+        it "shows an error", js: true do
+          fill_in "Card Code", with: cc_security
+          click_button "Save and Continue"
+          expect(page).to have_content("Your card's security code is invalid.")
+        end
+      end
+    end
+
+    context "when the expiration fields are invalid" do
+      let(:cc_expiration) { "00 / #{Time.current.year + 1}" }
+
+      it "shows an error", js: true do
+        fill_in "Card Code", with: "123"
+        click_button "Save and Continue"
+        expect(page).to have_content("Your card's expiration month is invalid.")
+      end
+    end
+
+    context "when the expiration fields are missing" do
+      let(:cc_expiration) { "" }
+
+      it "shows an error", js: true do
+        click_button "Save and Continue"
+        expect(page).to have_content("Your card's expiration year is invalid.")
+      end
+    end
   end
 
-  it "shows an error with a missing credit card number", js: true do
-    fill_in "Expiration", with: "01 / #{Time.now.year + 1}"
-    click_button "Save and Continue"
-    expect(page).to have_content("Could not find payment information")
+  context "when the CC number is invalid" do
+    let(:cc_number) { "1111 1111 1111 1111" }
+    let(:cc_expiration) { "01 / #{Time.current.year + 1}" }
+
+    it "shows an error", js: true do
+      click_button "Save and Continue"
+      expect(page).to have_content("Your card number is incorrect.")
+    end
   end
 
-  it "shows an error with a missing expiration date", js: true do
-    fill_in "Card Number", with: "4242 4242 4242 4242"
-    click_button "Save and Continue"
-    expect(page).to have_content("Your card's expiration year is invalid.")
-  end
+  context "when the CC number is empty" do
+    let(:cc_number) { "" }
+    let(:cc_expiration) { "01 / #{Time.current.year + 1}" }
 
-  it "shows an error with an invalid credit card number", js: true do
-    fill_in "Card Number", with: "1111 1111 1111 1111"
-    fill_in "Expiration", with: "01 / #{Time.now.year + 1}"
-    click_button "Save and Continue"
-    expect(page).to have_content("Your card number is incorrect.")
-  end
-
-  it "shows an error with invalid security fields", js: true do
-    fill_in "Card Number", with: "4242 4242 4242 4242"
-    fill_in "Expiration", with: "01 / #{Time.now.year + 1}"
-    fill_in "Card Code", with: "12"
-    click_button "Save and Continue"
-    expect(page).to have_content("Your card's security code is invalid.")
-  end
-
-  it "shows an error with invalid expiry fields", js: true do
-    fill_in "Card Number", with: "4242 4242 4242 4242"
-    fill_in "Expiration", with: "00 / #{Time.now.year + 1}"
-    fill_in "Card Code", with: "123"
-    click_button "Save and Continue"
-    expect(page).to have_content("Your card's expiration month is invalid.")
+    it "shows an error", js: true do
+      click_button "Save and Continue"
+      expect(page).to have_content("Could not find payment information")
+    end
   end
 end

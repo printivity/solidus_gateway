@@ -5,7 +5,7 @@ module Spree
     preference :test_mode, :boolean, :default => false
     preference :validate_on_profile_create, :boolean, :default => false
 
-    def provider_class
+    def gateway_class
       self.class
     end
 
@@ -188,8 +188,8 @@ module Spree
       def generate_address_hash(address)
         return {} if address.nil?
         {
-          first_name: address.firstname,
-          last_name: address.lastname,
+          first_name: address.name.firstname,
+          last_name: address.name.lastname,
           address1: address.address1,
           address2: address.address2,
           city: address.city,
