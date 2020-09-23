@@ -388,7 +388,7 @@ describe Spree::Gateway::BraintreeGateway do
     @payment.credit!
     expect(@payment.log_entries.size).to eq(2)
 
-    # Let"s get the payment record associated with the credit
+    # Let's get the payment record associated with the credit
     @payment = @order.payments.last
     expect(@payment.response_code).to be_present
 

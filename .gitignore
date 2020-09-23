@@ -4,6 +4,7 @@
 .DS_Store
 tmp
 spec/dummy
+.byebug_history
 Gemfile.lock
 .rvmrc
 coverage

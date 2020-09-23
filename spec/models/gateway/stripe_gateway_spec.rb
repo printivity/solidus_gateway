@@ -86,7 +86,7 @@ describe Spree::Gateway::StripeGateway do
       # Regression test for #141
       context "when correcting the card type" do
         before do
-          # We don"t care about this method for these tests
+          # We don't care about this method for these tests
           allow(subject.gateway).to receive(:store).and_return(double.as_null_object)
         end
 

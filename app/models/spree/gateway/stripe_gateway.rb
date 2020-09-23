@@ -95,7 +95,13 @@ module Spree
       options = {}
       options[:currency] = gateway_options[:currency]
 
-      if customer = creditcard.gateway_customer_profile_id
+      if gateway_options.dig(:originator) && gateway_options[:originator].order_id.present?
+        merch_order = Spree::Order.find_by(id: gateway_options[:originator][:order_id])
+
+        apply_level3_data!(options, merch_order)
+      end
+
+      if (customer = creditcard.gateway_customer_profile_id)
         options[:customer] = customer
       end
 
@@ -107,6 +113,64 @@ module Spree
       end
 
       return money, creditcard, options
+    end
+
+    def apply_level3_data!(options, merch_order)
+      options[:merchant_reference] = merch_order.id
+      options[:customer_reference] = merch_order.guest_token
+
+      if merch_order.for_delivery?
+        options[:shipping_address_zip] = merch_order.shipping_address.zipcode
+        options[:shipping_from_zip] = merch_order.shipments.first.stock_location.zipcode
+        options[:shipping_amount] = (merch_order.shipments.first.cost * 100.0).to_i
+      end
+
+      options[:line_items] = []
+
+      merch_order.line_items.each do |li|
+        options[:line_items] << {
+          product_code: li.variant.id,
+          product_description: li.product.description.presence || li.product.name,
+          unit_cost: (li.price * 100.0).to_i,
+          quantity: li.quantity,
+          tax_amount: (li.additional_tax_total * 100.0).to_i,
+          discount_amount: (((merch_order.promo_total.abs.to_d * li.quantity.to_d) / merch_order.quantity.to_d) * 100.0).to_i
+        }
+      end
+
+      merch_order_total = merch_order.total.to_d
+      checksum_total = calculate_checksum_from_options(options).to_d
+
+      if checksum_total != merch_order_total
+        notify_exception_handler(
+          "Checksum failed when sending Stripe Level 3 data for Spree::Order",
+          context: {
+            merch_order_id: merch_order.id,
+            merch_order_total: merch_order_total,
+            checksum_total: checksum_total,
+            options: options
+          }
+        )
+
+        options.delete(:line_items)
+        options.delete(:merchant_reference)
+        options.delete(:customer_reference)
+
+        options.delete(:shipping_address_zip)
+        options.delete(:shipping_from_zip)
+        options.delete(:shipping_amount)
+      end
+    end
+
+    def notify_exception_handler(message, context)
+      HoneyBadger.notify(message, context)
+    end
+
+    def calculate_checksum_from_options(options)
+      line_item_amount = options[:line_items].sum { |li| ((li[:quantity] * li[:unit_cost]) - li[:discount_amount]) + li[:tax_amount] }.to_d
+      shipping_cost = options[:shipping_amount].to_d
+
+      (line_item_amount + shipping_cost) / 100.0
     end
 
     def address_for(payment)
