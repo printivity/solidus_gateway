@@ -116,8 +116,8 @@ module Spree
     end
 
     def apply_level3_data!(options, merch_order)
-      options[:merchant_reference] = merch_order.id
-      options[:customer_reference] = merch_order.guest_token
+      options[:merchant_reference] = merch_order.id.to_s.slice(0, 25)
+      options[:customer_reference] = merch_order.guest_token.to_s.slice(0, 17)
 
       if merch_order.for_delivery?
         options[:shipping_address_zip] = merch_order.shipping_address.zipcode
@@ -129,8 +129,8 @@ module Spree
 
       merch_order.line_items.each do |li|
         options[:line_items] << {
-          product_code: li.variant.id,
-          product_description: li.product.description.presence || li.product.name,
+          product_code: li.variant.id.to_s.slice(0, 12),
+          product_description: (li.product.description.presence || li.product.name).to_s.slice(0, 26),
           unit_cost: (li.price * 100.0).to_i,
           quantity: li.quantity,
           tax_amount: (li.additional_tax_total * 100.0).to_i,
