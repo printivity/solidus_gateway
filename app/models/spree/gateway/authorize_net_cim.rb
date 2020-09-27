@@ -188,8 +188,8 @@ module Spree
       def generate_address_hash(address)
         return {} if address.nil?
         {
-          first_name: address.name.firstname,
-          last_name: address.name.lastname,
+          first_name: address.firstname,
+          last_name: address.lastname,
           address1: address.address1,
           address2: address.address2,
           city: address.city,
