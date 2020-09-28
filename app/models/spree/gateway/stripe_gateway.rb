@@ -163,7 +163,7 @@ module Spree
     end
 
     def notify_exception_handler(message, context)
-      HoneyBadger.notify(message, context)
+      Honeybadger.notify(message, context)
     end
 
     def calculate_checksum_from_options(options)
