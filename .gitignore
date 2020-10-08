@@ -10,3 +10,7 @@ Gemfile.lock
 coverage
 .ruby-version
 pkg
+*.swp
+*.swo
+*.swn
+*.swm

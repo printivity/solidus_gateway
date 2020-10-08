@@ -95,7 +95,7 @@ module Spree
       options = {}
       options[:currency] = gateway_options[:currency]
 
-      if gateway_options.dig(:originator) && gateway_options[:originator].order_id.present?
+      if gateway_options[:originator]&.order_id.present? && eligible_for_level3?(gateway_options)
         merch_order = Spree::Order.find_by(id: gateway_options[:originator][:order_id])
 
         apply_level3_data!(options, merch_order)
@@ -113,6 +113,10 @@ module Spree
       end
 
       return money, creditcard, options
+    end
+
+    def eligible_for_level3?(gateway_options)
+      account.in_usa? && (gateway_options.dig(:billing_address, :country) == "US") && (gateway_options.dig(:shipping_address, :country) == "US")
     end
 
     def apply_level3_data!(options, merch_order)
