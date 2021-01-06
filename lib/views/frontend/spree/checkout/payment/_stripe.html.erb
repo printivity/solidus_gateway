@@ -1,71 +1,57 @@
 <%= render "spree/checkout/payment/gateway", payment_method: payment_method %>
 
-<script type="text/javascript" src="https://js.stripe.com/v2/"></script>
-<script type="text/javascript">
-  Stripe.setPublishableKey("<%= payment_method.preferred_publishable_key %>");
-</script>
-
+<script type="text/javascript" src="https://js.stripe.com/v3/"></script>
 <script>
-  Spree.stripePaymentMethod = $('#payment_method_' + <%= payment_method.id %>);
-
-  var mapCC, stripeResponseHandler;
-
-  mapCC = function(ccType) {
-    if (ccType === 'MasterCard') {
-      return 'mastercard';
-    } else if (ccType === 'Visa') {
-      return 'visa';
-    } else if (ccType === 'American Express') {
-      return 'amex';
-    } else if (ccType === 'Discover') {
-      return 'discover';
-    } else if (ccType === 'Diners Club') {
-      return 'dinersclub';
-    } else if (ccType === 'JCB') {
-      return 'jcb';
-    }
-  };
-
-  stripeResponseHandler = function(status, response) {
-    var paymentMethodId, token;
-    if (response.error) {
-      $('#stripeError').html(response.error.message);
-      return $('#stripeError').show();
-    } else {
-      Spree.stripePaymentMethod.find('#card_number, #card_expiry, #card_code').prop("disabled", true);
-      Spree.stripePaymentMethod.find(".ccType").prop("disabled", false);
-      Spree.stripePaymentMethod.find(".ccType").val(mapCC(response.card.brand));
-      token = response['id'];
-      paymentMethodId = Spree.stripePaymentMethod.prop('id').split("_")[2];
-      Spree.stripePaymentMethod.append("<input type='hidden' class='stripeToken' name='payment_source[" + paymentMethodId + "][gateway_payment_profile_id]' value='" + token + "'/>");
-      Spree.stripePaymentMethod.append("<input type='hidden' class='stripeToken' name='payment_source[" + paymentMethodId + "][last_digits]' value='" + response.card.last4 + "'/>");
-      Spree.stripePaymentMethod.append("<input type='hidden' class='stripeToken' name='payment_source[" + paymentMethodId + "][month]' value='" + response.card.exp_month + "'/>");
-      Spree.stripePaymentMethod.append("<input type='hidden' class='stripeToken' name='payment_source[" + paymentMethodId + "][year]' value='" + response.card.exp_year + "'/>");
-      return Spree.stripePaymentMethod.parents("form").get(0).submit();
-    }
-  };
-
-  $(document).ready(function() {
-    Spree.stripePaymentMethod.prepend("<div id='stripeError' class='errorExplanation' style='display:none'></div>");
-    return $('#checkout_form_payment [data-hook=buttons]').click(function() {
-      var expiration, params;
-      $('#stripeError').hide();
-      if (Spree.stripePaymentMethod.is(':visible')) {
-        expiration = $('.cardExpiry:visible').payment('cardExpiryVal');
-        params = $.extend({
-          number: $('.cardNumber:visible').val(),
-          cvc: $('.cardCode:visible').val(),
-          exp_month: expiration.month || 0,
-          exp_year: expiration.year || 0
-        }, Spree.stripeAdditionalInfo);
-        Stripe.card.createToken(params, stripeResponseHandler);
-        return false;
+  $(() => {
+    Spree.stripePaymentMethod = $('#payment_method_' + <%= payment_method.id %>);
+    const stripe = Stripe("<%= payment_method.preferred_publishable_key %>");
+    const elements = stripe.elements();
+    const card = elements.create('card', {
+      style: {
+        base: {
+          lineHeight: "20px"
+        }
       }
+    });
+
+    function stripeTokenHandler(token) {
+      // Insert the token ID into the form so it gets submitted to the server
+      const form = $(Spree.stripePaymentMethod.parents("form").get(0));
+      const paymentMethodId = Spree.stripePaymentMethod.prop('id').split("_")[2];
+      const addStripeHiddenInput = (name, value) => form.append($("<input type='hidden' name='payment_source[" + paymentMethodId + "][" + name + "]' value='" + value + "'/>"));
+
+      addStripeHiddenInput("gateway_payment_profile_id",  token.id);
+      addStripeHiddenInput("last_digits",  token.card.last4);
+      addStripeHiddenInput("month",  token.card.exp_month);
+      addStripeHiddenInput("year",  token.card.exp_year);
+
+      form.submit();
+    };
+
+    function createToken() {
+      stripe.createToken(card).then((result) => {
+        if (result.error) {
+          // Inform the user if there was an error
+          const errorElement = document.getElementById('card-errors');
+          errorElement.textContent = result.error.message;
+        } else {
+          // Send the token to your server
+          stripeTokenHandler(result.token);
+        }
+      });
+    };
+
+    // Add an instance of the card UI component into the `card-element` <div>
+    card.mount('#card-element');
+
+    $('#checkout_form_payment [data-hook=buttons]').click((event) => {
+      event.preventDefault();
+      createToken();
     });
   });
 </script>
 
-<%- if @order.has_checkout_step?('address') && @order.bill_address.present?-%>
+<%- if @order.has_checkout_step?('address') && @order.bill_address.present? -%>
   <script>
     Spree.stripeAdditionalInfo = {
       name: "<%= @order.bill_address.full_name %>",
