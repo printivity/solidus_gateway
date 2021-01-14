@@ -29,7 +29,7 @@
     };
 
     function createToken() {
-      stripe.createToken(card).then((result) => {
+      stripe.createToken(card, Spree.stripeAdditionalInfo).then((result) => {
         if (result.error) {
           // Inform the user if there was an error
           const errorElement = document.getElementById('card-errors');
