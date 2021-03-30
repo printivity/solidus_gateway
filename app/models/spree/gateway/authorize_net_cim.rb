@@ -64,6 +64,13 @@ module Spree
       response
     end
 
+    def try_void(payment)
+      void_response = void(payment.response_code, payment.source, {})
+      return void_response if void_response.success?
+
+      false
+    end
+
     def payment_profiles_supported?
       true
     end

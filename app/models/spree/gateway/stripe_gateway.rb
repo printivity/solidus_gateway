@@ -51,6 +51,13 @@ module Spree
       gateway.void(response_code, {})
     end
 
+    def try_void(payment)
+      void_response = void(payment.response_code, payment.source, {})
+      return void_response if void_response.success?
+
+      false
+    end
+
     def create_profile(payment)
       return unless payment.source.gateway_customer_profile_id.nil?
 
