@@ -154,9 +154,14 @@ module Spree
           customer_payment_profile_id: creditcard.gateway_payment_profile_id
         }) if creditcard
 
+        options = { transaction: transaction_options }
+
+        solution_id = ActiveMerchant::Billing::AuthorizeNetCimGateway.application_id
+        options.merge!({ extra_options: { x_solution_id: solution_id } }) if solution_id.present?
+
         logger.debug("\nAuthorize Net CIM Request")
-        logger.debug("  transaction_options: #{transaction_options.inspect}")
-        t = cim_gateway.create_customer_profile_transaction(:transaction => transaction_options)
+        logger.debug("  options: #{options.inspect}")
+        t = cim_gateway.create_customer_profile_transaction(options)
         logger.debug("\nAuthorize Net CIM Response")
         logger.debug("  response: #{t.inspect}\n")
         t
