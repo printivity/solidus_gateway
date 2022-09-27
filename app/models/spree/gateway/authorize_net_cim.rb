@@ -199,9 +199,13 @@ module Spree
       # As in PaymentGateway but with separate name fields
       def generate_address_hash(address)
         return {} if address.nil?
+        
+        name = address.name.split
+        return {} if name.length < 2
+        
         {
-          first_name: address.firstname,
-          last_name: address.lastname,
+          first_name: name[0],
+          last_name: name[1..(x.length-1)].join(" "),
           address1: address.address1,
           address2: address.address2,
           city: address.city,
