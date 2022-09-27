@@ -205,7 +205,7 @@ module Spree
         
         {
           first_name: name[0],
-          last_name: name[1..(x.length-1)].join(" "),
+          last_name: name[1..(name.length-1)].join(" "),
           address1: address.address1,
           address2: address.address2,
           city: address.city,
