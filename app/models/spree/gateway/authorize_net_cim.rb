@@ -77,9 +77,53 @@ module Spree
 
     # Create a new CIM customer profile ready to accept a payment. Called by Spree::Payment on after_save.
     def create_profile(payment)
-      if payment.source.gateway_customer_profile_id.nil?
-        profile_hash = create_customer_profile(payment)
-        payment.source.update(gateway_customer_profile_id: profile_hash[:customer_profile_id], gateway_payment_profile_id: profile_hash[:customer_payment_profile_id])
+      existing_cards = payment.order.user.credit_cards
+                              .where.not(gateway_customer_profile_id: nil)
+                              .order(updated_at: :desc)
+      if existing_cards.any?
+        existing_profile_id = existing_cards.first.gateway_customer_profile_id
+        Rails.logger.info("Using existing customer profile: #{existing_profile_id}")
+
+        payment.source.update(gateway_customer_profile_id: existing_profile_id)
+        create_payment_profile_for_existing_customer(payment)
+        return
+      end
+
+      profile_hash = create_customer_profile(payment)
+      payment.source.update(gateway_customer_profile_id: profile_hash[:customer_profile_id], gateway_payment_profile_id: profile_hash[:customer_payment_profile_id])
+    end
+
+    def create_payment_profile_for_existing_customer(payment)
+      customer_profile_id = payment.source.gateway_customer_profile_id
+
+      return true if payment.source.gateway_payment_profile_id.present?
+
+      if payment.is_a? CreditCard
+        bill_to = generate_address_hash(payment.address)
+      else
+        bill_to = generate_address_hash(payment.order.bill_address)
+      end
+
+      info = { 
+        bill_to: bill_to, 
+        payment: { credit_card: payment.source } 
+      }
+
+      validation_mode = preferred_validate_on_profile_create ? preferred_server.to_sym : :none
+
+      # Create payment profile
+      response = cim_gateway.create_customer_payment_profile({
+        customer_profile_id: customer_profile_id,
+        payment_profile: info,
+        validation_mode: validation_mode
+      })
+
+      if response.success?
+        payment.source.update(gateway_payment_profile_id: response.params["customer_payment_profile_id"])
+        return true
+      else
+        payment.send(:gateway_error, response)
+        return false
       end
     end
 
