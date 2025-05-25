@@ -77,6 +77,16 @@ module Spree
 
     # Create a new CIM customer profile ready to accept a payment. Called by Spree::Payment on after_save.
     def create_profile(payment)
+      if payment.source.has_payment_profile?
+        return
+      end
+
+      unless payment.order.user
+        profile_hash = create_customer_profile(payment)
+        payment.source.update(gateway_customer_profile_id: profile_hash[:customer_profile_id], gateway_payment_profile_id: profile_hash[:customer_payment_profile_id])
+        return
+      end
+
       existing_cards = payment.order.user.credit_cards
                               .where.not(gateway_customer_profile_id: nil)
                               .order(updated_at: :desc)
